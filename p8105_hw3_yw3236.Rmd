@@ -14,3 +14,10 @@ library(tidyverse)
 ```{r}
 devtools::install_github("p8105/p8105.datasets")
 ```
+
+```{r}
+library(p8105.datasets)
+
+data(brfss_smart2010)
+```
+
