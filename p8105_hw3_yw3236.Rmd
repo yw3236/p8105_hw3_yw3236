@@ -9,6 +9,7 @@ date: 2018-10-07
 
 ```{r set up library, include = FALSE}
 library(tidyverse)
+library(dplyr)
 ```
 
 ```{r}
@@ -20,4 +21,15 @@ library(p8105.datasets)
 
 data(brfss_smart2010)
 ```
+View(brfss_smart2010)
 
+```{r}
+formated_brfss_smart2010 = brfss_smart2010 %>%
+  janitor::clean_names() %>%
+  rename(., state = locationabbr, county = locationdesc) %>%
+  filter(., topic == "Overall Health") %>%
+  select(., -class, -topic, -question, -sample_size, -data_value, -(confidence_limit_low : geo_location))
+```
+
+
+View(formated_brfss_smart2010)
