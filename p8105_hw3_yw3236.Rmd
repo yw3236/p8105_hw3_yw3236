@@ -28,8 +28,21 @@ formated_brfss_smart2010 = brfss_smart2010 %>%
   janitor::clean_names() %>%
   rename(., state = locationabbr, county = locationdesc) %>%
   filter(., topic == "Overall Health") %>%
-  select(., -class, -topic, -question, -sample_size, -data_value, -(confidence_limit_low : geo_location))
+  select(., -class, -topic, -question, -sample_size, -data_value, -(confidence_limit_low:geo_location)) %>%
+  mutate(., response = as.factor(.$response)) %>%
+  arrange(., factor(response, levels = c("excellent", "very_good", "good", "fair", "ppor")))
+
+formated_brfss_smart2010
 ```
-
-
 View(formated_brfss_smart2010)
+
+```{r}
+formated_brfss_smart2010_2002 = formated_brfss_smart2010 %>%
+  filter(., year == "2002") %>%
+  select(., -response) %>%
+  unique(.) %>%
+  group_by(state) %>%
+  summarize(n = n())
+```
+View(formated_brfss_smart2010_2002)
+
