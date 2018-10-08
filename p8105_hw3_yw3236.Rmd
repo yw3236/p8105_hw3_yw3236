@@ -46,3 +46,7 @@ formated_brfss_smart2010_2002 = formated_brfss_smart2010 %>%
 ```
 View(formated_brfss_smart2010_2002)
 
+```{r}
+Spaghetti.Plot = (formated_brfss_smart2010)
+```
+
