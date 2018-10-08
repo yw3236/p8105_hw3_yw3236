@@ -1,0 +1,12 @@
+---
+title: "p8105_hw3_yw3236"
+output: github_document
+author: "Yishan Wang"
+date: 2018-10-07
+---
+
+# Problem 1
+
+```{r set up library, include = FALSE}
+library(tidyverse)
+```
