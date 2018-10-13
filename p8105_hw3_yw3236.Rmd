@@ -28,9 +28,9 @@ formated_brfss_smart2010 = brfss_smart2010 %>%
   janitor::clean_names() %>%
   rename(., state = locationabbr, county = locationdesc) %>%
   filter(., topic == "Overall Health") %>%
-  select(., -class, -topic, -question, -sample_size, -data_value, -(confidence_limit_low:geo_location)) %>%
+  filter(., response == "Excellent" | response == "Very good" | response == "Good" | response == "Fair" | response == "Poor") %>%
   mutate(., response = as.factor(.$response)) %>%
-  arrange(., factor(response, levels = c("excellent", "very_good", "good", "fair", "ppor")))
+  arrange(., factor(response, levels = c("Excellent", "Very good", "Good", "Fair", "Poor")))
 
 formated_brfss_smart2010
 ```
@@ -39,7 +39,7 @@ View(formated_brfss_smart2010)
 ```{r}
 formated_brfss_smart2010_2002 = formated_brfss_smart2010 %>%
   filter(., year == "2002") %>%
-  select(., -response) %>%
+  select(., year, state, county) %>%
   unique(.) %>%
   group_by(state) %>%
   summarize(n = n())
@@ -47,6 +47,117 @@ formated_brfss_smart2010_2002 = formated_brfss_smart2010 %>%
 View(formated_brfss_smart2010_2002)
 
 ```{r}
-Spaghetti.Plot = (formated_brfss_smart2010)
-```
+formated_brfss_smart2010_2002_to_2010 = formated_brfss_smart2010 %>%
+  select(., year, state, county) %>%
+  unique(.) %>%
+  group_by(year, state) %>%
+  summarize(n_location = n())
 
+formated_brfss_smart2010_2002_to_2010
+
+interaction.plot(formated_brfss_smart2010_2002_to_2010$year, 
+                 formated_brfss_smart2010_2002_to_2010$state, 
+                 formated_brfss_smart2010_2002_to_2010$n_location, 
+                 xlab = "Year", 
+                 ylab = "Number of Locations in Each State" , 
+                 legend = T)
+```
+View(formated_brfss_smart2010_2002_to_2010)
+
+```{r}
+formated_brfss_smart2010_excellent_NY = formated_brfss_smart2010 %>%
+  filter(., year == "2002" | year == "2006" | year == "2010") %>%
+  filter(., state == "NY") %>%
+  select(., year, state, county, response, data_value) %>%
+  arrange(., year, county) %>%
+  filter(., response == "Excellent") %>%
+  group_by(year) %>%
+  summarise(mean_ny_excellent = mean(data_value), var_ny_excellent = var(data_value)) %>%
+  knitr::kable(digits = 1) 
+
+formated_brfss_smart2010_excellent_NY
+```
+View(formated_brfss_smart2010_excellent_NY)
+
+```{r}
+response_average_prop = formated_brfss_smart2010 %>%
+  select(., year, state, county, response, data_value) %>%
+  group_by(year, state, response) %>%
+  summarise(average_prop = mean(data_value))
+
+response_average_prop[order(response_average_prop$response),]
+
+ggplot(response_average_prop, aes(x = year, y = average_prop)) +
+  geom_point() +
+  facet_grid(~response) +
+  viridis::scale_fill_viridis(discrete = TRUE)
+```
+View(response_average_prop)
+
+# Problem 2
+
+```{r}
+data(instacart)
+```
+View(instacart)
+
+```{r}
+n_aisles = nrow(instacart %>%
+  select(., aisle) %>%
+  unique(.))
+
+most_order_aisles = instacart %>%
+  select(., aisle, product_id) %>%
+  arrange(., aisle, product_id) %>%
+  group_by(aisle) %>%
+  summarise(item_num = n()) %>%
+  arrange(., item_num) %>%
+  tail(5)
+```
+View(most_order_aisles)
+
+```{r}
+order_aisles = instacart %>%
+  select(., aisle, product_id) %>%
+  arrange(., aisle, product_id) %>%
+  group_by(aisle) %>%
+  summarise(item_num = n())
+
+ggplot(order_aisles, aes(x = aisle, y = item_num)) +  
+  geom_point(alpha = .5) +
+  theme(legend.position = "bottom") +
+  ylim(0, 50000)
+```
+View(order_aisles)
+
+```{r}
+popular_aisles = instacart %>%
+  select(., aisle, product_id, product_name) %>%
+  filter(., aisle == "baking ingredients" | aisle == "dog food care" | aisle == "packaged vegetables fruits") %>%
+  arrange(., aisle, product_id) %>%
+  group_by(aisle, product_id, product_name) %>%
+  summarise(item_num = n())
+  
+popular_bi_item = popular_aisles %>%
+  filter(., aisle == "baking ingredients") %>%
+  arrange(., item_num) %>%
+  tail(1)
+
+popular_dfc_item = popular_aisles %>%
+  filter(., aisle == "dog food care") %>%
+  arrange(., item_num) %>%
+  tail(1)
+
+popular_pvf_item = popular_aisles %>%
+  filter(., aisle == "packaged vegetables fruits") %>%
+  arrange(., item_num) %>%
+  tail(1)
+
+table = tibble(
+  ailse = c("baking ingredients", "dog food care", "packaged vegetables fruits"),
+  popular_item = c(popular_bi_item$product_name, popular_dfc_item$product_name, popular_pvf_item$product_name)
+) %>%
+  knitr::kable(digits = 1) 
+```
+View(popular_aisles)
+View(table)
