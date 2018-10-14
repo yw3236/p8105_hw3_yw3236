@@ -47,20 +47,15 @@ formated_brfss_smart2010_2002 = formated_brfss_smart2010 %>%
 View(formated_brfss_smart2010_2002)
 
 ```{r}
-formated_brfss_smart2010_2002_to_2010 = formated_brfss_smart2010 %>%
-  select(., year, state, county) %>%
-  unique(.) %>%
+plot_2002_to_2010 = formated_brfss_smart2010 %>%
+  select(., year, state) %>%
   group_by(year, state) %>%
-  summarize(n_location = n())
+  summarize(n_location = n()) %>%
+  ggplot() +
+  geom_line(aes(x = year, y = n_location, color = state)) +
+  labs(x = "Year", y = "Number of Locations")
 
-formated_brfss_smart2010_2002_to_2010
-
-interaction.plot(formated_brfss_smart2010_2002_to_2010$year, 
-                 formated_brfss_smart2010_2002_to_2010$state, 
-                 formated_brfss_smart2010_2002_to_2010$n_location, 
-                 xlab = "Year", 
-                 ylab = "Number of Locations in Each State" , 
-                 legend = T)
+plot_2002_to_2010
 ```
 View(formated_brfss_smart2010_2002_to_2010)
 
@@ -72,7 +67,7 @@ formated_brfss_smart2010_excellent_NY = formated_brfss_smart2010 %>%
   arrange(., year, county) %>%
   filter(., response == "Excellent") %>%
   group_by(year) %>%
-  summarise(mean_ny_excellent = mean(data_value), var_ny_excellent = var(data_value)) %>%
+  summarise(mean_ny_excellent = mean(data_value), std_ny_excellent = sqrt(var(data_value))) %>%
   knitr::kable(digits = 1) 
 
 formated_brfss_smart2010_excellent_NY
@@ -85,12 +80,9 @@ response_average_prop = formated_brfss_smart2010 %>%
   group_by(year, state, response) %>%
   summarise(average_prop = mean(data_value))
 
-response_average_prop[order(response_average_prop$response),]
-
 ggplot(response_average_prop, aes(x = year, y = average_prop)) +
   geom_point() +
-  facet_grid(~response) +
-  viridis::scale_fill_viridis(discrete = TRUE)
+  facet_grid(~response)
 ```
 View(response_average_prop)
 
@@ -106,6 +98,8 @@ n_aisles = nrow(instacart %>%
   select(., aisle) %>%
   unique(.))
 
+n_aisles
+
 most_order_aisles = instacart %>%
   select(., aisle, product_id) %>%
   arrange(., aisle, product_id) %>%
@@ -113,6 +107,8 @@ most_order_aisles = instacart %>%
   summarise(item_num = n()) %>%
   arrange(., item_num) %>%
   tail(5)
+
+most_order_aisles
 ```
 View(most_order_aisles)
 
@@ -121,12 +117,13 @@ order_aisles = instacart %>%
   select(., aisle, product_id) %>%
   arrange(., aisle, product_id) %>%
   group_by(aisle) %>%
-  summarise(item_num = n())
+  summarise(item_num = n()) %>%
+  arrange(., desc(item_num)) %>%
+  ggplot() +  
+  geom_point(aes(x = reorder(aisle, -item_num), y = item_num, color = item_num)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = rel(1)))
 
-ggplot(order_aisles, aes(x = aisle, y = item_num)) +  
-  geom_point(alpha = .5) +
-  theme(legend.position = "bottom") +
-  ylim(0, 50000)
+order_aisles
 ```
 View(order_aisles)
 
@@ -153,11 +150,105 @@ popular_pvf_item = popular_aisles %>%
   arrange(., item_num) %>%
   tail(1)
 
-table = tibble(
+tibble(
   ailse = c("baking ingredients", "dog food care", "packaged vegetables fruits"),
   popular_item = c(popular_bi_item$product_name, popular_dfc_item$product_name, popular_pvf_item$product_name)
 ) %>%
   knitr::kable(digits = 1) 
 ```
-View(popular_aisles)
-View(table)
+
+```{r}
+mean_hour = instacart %>%
+  select(., product_name, order_hour_of_day, order_dow) %>%
+  filter(., product_name == "Pink Lady Apples" | product_name == "Coffee Ice Cream") %>%
+  group_by(order_dow, product_name) %>%
+  summarise(mean_hour_day = mean(order_hour_of_day)) %>%
+  rename(day = order_dow) 
+
+table_mean_hour = mean_hour %>%
+  mutate(mean_hour_day = round(mean_hour_day, 2)) %>%
+  mutate(mean_hour_day = format(mean_hour_day, nsmall = 2)) %>%
+  separate(mean_hour_day, into = c("hours", "mins"), sep = "\\.") %>%   
+  mutate(mins = round(as.numeric(mins)*0.6)) %>%  
+  mutate(average_time_order = paste(hours, "hours", mins, "mins")) %>% 
+  select(day, product_name, average_time_order) %>%   
+  spread(key = day, value = average_time_order) %>% 
+  knitr::kable(digits = 2, col.names = c("Product", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"),
+               caption = "Mean Time of Day Most Listed Items Were Ordered")
+
+table_mean_hour
+```
+
+# Problem 3
+```{r}
+data(ny_noaa)
+```
+View(ny_noaa)
+
+```{r}
+formated_ny_noaa = ny_noaa %>% 
+  ungroup() %>%
+  mutate(year = format(date, "%Y"), month = format(date, "%m"), day = format(date, "%d")) %>%
+  mutate(prcp = prcp/10, tmax = as.numeric(tmax)/10, tmin = as.numeric(tmin)/10) %>%
+  select(., id, year, month, day, prcp, snow, snwd, tmax, tmin) 
+
+formated_ny_noaa
+
+common_snwd = formated_ny_noaa %>%
+  select(., snwd) %>%
+  filter(., !is.na(snwd)) %>%
+  group_by(snwd) %>%
+  summarise(n = n()) %>%
+  arrange(., n) %>%
+  tail(1)
+
+common_snwd
+```
+View(formated_ny_noaa)
+View(common_snwd)
+
+```{r}
+jan_jul_temp = formated_ny_noaa %>%
+  select(., id, year, month, day, tmax) %>%
+  filter(., !is.na(tmax)) %>%
+  filter(., month == "01" | month == "07") %>%
+  group_by(year, month, id) %>%
+  summarise(average_max_temp = mean(tmax))
+
+ggplot(jan_jul_temp, aes(x = year, y = average_max_temp)) +
+  geom_point() +
+  facet_grid(~month)
+
+ggplot(jan_jul_temp, aes(x = year, y = average_max_temp)) +
+  geom_boxplot() +
+  facet_grid(~month) 
+```
+View(jan_jul_temp)
+
+```{r}
+temp = formated_ny_noaa %>%
+  select(., id, year, month, day, tmax, tmin) %>%
+  filter(., !is.na(tmax) & !is.na(tmin)) 
+
+temp_plot = ggplot(temp, aes(x = tmin, y = tmax)) +     
+  geom_density_2d() +    
+  labs(x = "Min Temp (C)",
+       y = "Max Temp (C)")
+
+temp_plot
+```
+View(temp)
+
+```{r}
+snowfall = formated_ny_noaa %>%
+  select(., id, year, month, day, snow) %>%
+  filter(., snow > 0 & snow < 100) %>%
+  group_by(year)
+
+snow_plot = ggplot(snowfall) + 
+  geom_violin(aes(x = year, y = snow)) +
+  labs(x = "Year", y = "Snow (mm)")
+
+snow_plot
+```
+View(snowfall)
