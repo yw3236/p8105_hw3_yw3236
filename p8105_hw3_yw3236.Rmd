@@ -18,10 +18,15 @@ devtools::install_github("p8105/p8105.datasets")
 
 ```{r}
 library(p8105.datasets)
-
-data(brfss_smart2010)
+data(brfss_smart2010) #read the dataset
 ```
-View(brfss_smart2010)
+
+### Clean Data
+
+* Format the data to use appropriate variable names
+* Focus on the “Overall Health” topic
+* Include only responses from “Excellent” to “Poor”
+* Organize responses as a factor taking levels ordered from “Excellent” to “Poor”
 
 ```{r}
 formated_brfss_smart2010 = brfss_smart2010 %>%
@@ -29,12 +34,12 @@ formated_brfss_smart2010 = brfss_smart2010 %>%
   rename(., state = locationabbr, county = locationdesc) %>%
   filter(., topic == "Overall Health") %>%
   filter(., response == "Excellent" | response == "Very good" | response == "Good" | response == "Fair" | response == "Poor") %>%
-  mutate(., response = as.factor(.$response)) %>%
-  arrange(., factor(response, levels = c("Excellent", "Very good", "Good", "Fair", "Poor")))
+  mutate(., factor(response, levels = c("Excellent", "Very good", "Good", "Fair", "Poor")))
 
 formated_brfss_smart2010
 ```
-View(formated_brfss_smart2010)
+
+### Question 1
 
 ```{r}
 formated_brfss_smart2010_2002 = formated_brfss_smart2010 %>%
@@ -44,7 +49,12 @@ formated_brfss_smart2010_2002 = formated_brfss_smart2010 %>%
   group_by(state) %>%
   summarize(n = n())
 ```
-View(formated_brfss_smart2010_2002)
+
+In 2002, CT, FL, NC were observed at 7 locations.
+
+### Question 2
+
+Make a “spaghetti plot” that shows the number of locations in each state from 2002 to 2010.
 
 ```{r}
 plot_2002_to_2010 = formated_brfss_smart2010 %>%
@@ -57,7 +67,12 @@ plot_2002_to_2010 = formated_brfss_smart2010 %>%
 
 plot_2002_to_2010
 ```
-View(formated_brfss_smart2010_2002_to_2010)
+
+There are many lines in the plot, just like "spaghetti". It's kind of difficult to read information from this plot.
+
+### Question 3
+
+Make a table showing, for the years 2002, 2006, and 2010, the mean and standard deviation of the proportion of “Excellent” responses across locations in NY State.
 
 ```{r}
 formated_brfss_smart2010_excellent_NY = formated_brfss_smart2010 %>%
@@ -72,7 +87,12 @@ formated_brfss_smart2010_excellent_NY = formated_brfss_smart2010 %>%
 
 formated_brfss_smart2010_excellent_NY
 ```
-View(formated_brfss_smart2010_excellent_NY)
+
+From the table, we can see that year 2002 has the highest mean and standard deviation of the proportion of “Excellent” responses across locations in NY State.
+
+### Question 4
+
+* For each year and state, compute the average proportion in each response category. * Make a five-panel plot that shows, for each response category separately, the distribution of these state-level averages over time.
 
 ```{r}
 response_average_prop = formated_brfss_smart2010 %>%
@@ -84,14 +104,20 @@ ggplot(response_average_prop, aes(x = year, y = average_prop)) +
   geom_point() +
   facet_grid(~response)
 ```
-View(response_average_prop)
+
+For the **excellent** response, the average proportion of it from 2002 to 2010 is approximatelly between 15% and 30 %. For the **very good** response, the average proportion of it from 2002 to 2010 is approximatelly between 25% and 40%. For the **good** response, the average proportion of it from 2002 to 2010 is approximatelly between 25% and 35%. For the **fair** response, the average proportion of it from 2002 to 2010 is approximatelly between 5% and 15%. For the **poor** response, the average proportion of it from 2002 to 2010 is approximatelly between 0% and 10%.
 
 # Problem 2
 
 ```{r}
 data(instacart)
 ```
-View(instacart)
+
+#### Description of the Dataset
+
+The dataset is about instacart company sale information. The size of the dataset is 1,384,617 x 15. The structure of the dataset is ready for the analysis. The key variables are `order_dow`, `order_hour_of_day`, `product_name`, `aisle`. Each observation includes custmers' information, ordered products' imformation. 
+
+### Question 1
 
 ```{r}
 n_aisles = nrow(instacart %>%
@@ -110,7 +136,12 @@ most_order_aisles = instacart %>%
 
 most_order_aisles
 ```
-View(most_order_aisles)
+
+There are 134 aisles there. The most items ordered from fresh vegetables aisle.
+
+### Question 2
+
+Make a plot that shows the number of items ordered in each aisle.
 
 ```{r}
 order_aisles = instacart %>%
@@ -120,12 +151,18 @@ order_aisles = instacart %>%
   summarise(item_num = n()) %>%
   arrange(., desc(item_num)) %>%
   ggplot() +  
-  geom_point(aes(x = reorder(aisle, -item_num), y = item_num, color = item_num)) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = rel(1)))
+  geom_point(aes(x = reorder(aisle, -item_num), y = item_num)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = rel(1))) +
+  labs(x = "Aisle", y = "Number of Items")
 
 order_aisles
 ```
-View(order_aisles)
+
+Since there are too many aisles in the x axis, I choose to order the `item_num` as decending order and adjust the theme of the graph, such as set the angle is 90. From the graph, we can see that there are few items that has really high number of items. The number of items of the majority of aisles is under 50000. 
+
+### Question 3
+
+Make a table showing the most popular item in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”.
 
 ```{r}
 popular_aisles = instacart %>%
@@ -157,6 +194,12 @@ tibble(
   knitr::kable(digits = 1) 
 ```
 
+By looking at the table, we can find the most poplular items in each aisle mentioned above. We can see that light brown sugar is the most popular ingredients. Dog owners love Snack Sticks Chicken & Rice Recipe Dog Treats. The most popular vegetable is organic baby spinach. From the table, the company can buy more those popular items for sale. 
+
+### Question 4
+
+Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week.
+
 ```{r}
 mean_hour = instacart %>%
   select(., product_name, order_hour_of_day, order_dow) %>%
@@ -170,7 +213,7 @@ table_mean_hour = mean_hour %>%
   mutate(mean_hour_day = format(mean_hour_day, nsmall = 2)) %>%
   separate(mean_hour_day, into = c("hours", "mins"), sep = "\\.") %>%   
   mutate(mins = round(as.numeric(mins)*0.6)) %>%  
-  mutate(average_time_order = paste(hours, "hours", mins, "mins")) %>% 
+  mutate(average_time_order = paste(hours, ":", mins)) %>% 
   select(day, product_name, average_time_order) %>%   
   spread(key = day, value = average_time_order) %>% 
   knitr::kable(digits = 2, col.names = c("Product", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"),
@@ -179,11 +222,21 @@ table_mean_hour = mean_hour %>%
 table_mean_hour
 ```
 
+From the table, we can see coffee ice cream is usually bought after 12AM and pink laby apples are usually bought before 12AM.
+
 # Problem 3
+
 ```{r}
 data(ny_noaa)
 ```
-View(ny_noaa)
+
+#### Description of the Dataset
+
+The size of the dataset is 2,595,176 x 7. I would say all of the variables in the dataset are key variables because different problems need different variables. The structure of this data is ready for the analysis, except for seperating date variable. Each variable of this dataset have lots of missing values. Those missing data might couse not accurate result.
+
+### Question 1
+
+Separate variables for year, month, and day.
 
 ```{r}
 formated_ny_noaa = ny_noaa %>% 
@@ -204,8 +257,12 @@ common_snwd = formated_ny_noaa %>%
 
 common_snwd
 ```
-View(formated_ny_noaa)
-View(common_snwd)
+
+For snowfall, the most commonly observed values are 0. The reason is becasue snow only in winter time and winter time is relatively short comparing a whole year.
+
+### Question 2
+
+Make a two-panel plot showing the average max temperature in January and in July in each station across years. 
 
 ```{r}
 jan_jul_temp = formated_ny_noaa %>%
@@ -223,21 +280,31 @@ ggplot(jan_jul_temp, aes(x = year, y = average_max_temp)) +
   geom_boxplot() +
   facet_grid(~month) 
 ```
-View(jan_jul_temp)
+
+There is an observable structure. The average max temperature in Jan is lower than the average max temperature in Jul. There are outiers. Those outilers are easily to be identified from boxplot.
+
+### Question 3
+
+Plot tmax vs tmin for the full dataset. 
 
 ```{r}
+library(hexbin)
+
 temp = formated_ny_noaa %>%
   select(., id, year, month, day, tmax, tmin) %>%
   filter(., !is.na(tmax) & !is.na(tmin)) 
 
 temp_plot = ggplot(temp, aes(x = tmin, y = tmax)) +     
-  geom_density_2d() +    
+  geom_hex() +    
   labs(x = "Min Temp (C)",
        y = "Max Temp (C)")
 
 temp_plot
 ```
-View(temp)
+
+There are two peaks in the hex plot.
+
+Make a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year.
 
 ```{r}
 snowfall = formated_ny_noaa %>%
@@ -251,4 +318,8 @@ snow_plot = ggplot(snowfall) +
 
 snow_plot
 ```
-View(snowfall)
+
+Each year's violin plot is relatively same. 
+
+
+
