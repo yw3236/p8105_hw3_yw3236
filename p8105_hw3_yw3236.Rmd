@@ -313,13 +313,19 @@ snowfall = formated_ny_noaa %>%
   group_by(year)
 
 snow_plot = ggplot(snowfall) + 
-  geom_violin(aes(x = year, y = snow)) +
+  geom_boxplot(aes(x = year, y = snow)) +
   labs(x = "Year", y = "Snow (mm)")
 
 snow_plot
 ```
 
-Each year's violin plot is relatively same. 
+Each year's box plot is relatively same. 
 
+Combine two plots.
+
+```{r}
+require(gridExtra)
+grid.arrange(temp_plot, snow_plot, ncol = 2)
+```
 
 
